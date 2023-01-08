@@ -1,5 +1,18 @@
 const vector = (x, y) => (
-    Object.assign([x, y], {x, y})
+    Object.assign([x, y], {
+        x,
+        y,
+        drawPoint: ({ctx, radius, lineWidth = 1, strokeStyle = '#000', fillStyle = '#000'}) => {
+            ctx.lineWidth = lineWidth;
+            ctx.strokeStyle = strokeStyle;
+            ctx.fillStyle = fillStyle;
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, 2 * Math.PI);
+            ctx.stroke();
+            ctx.fill();
+            ctx.closePath();
+        },
+    })
 );
 
 const createLine = (x1, y1, x2, y2) => {
@@ -9,7 +22,16 @@ const createLine = (x1, y1, x2, y2) => {
     const b = y1 - k * x1;
     const getY = (x) => k * x + b;
     const getX = (y) => y / k - b;
-    return {start, end, k, b, getX, getY};
+    const draw = (ctx, lineWidth = 1, strokeStyle = '#000') => {
+        ctx.lineWidth = lineWidth;
+        ctx.strokeStyle = strokeStyle;
+        ctx.beginPath();
+        ctx.moveTo(start.x, start.y);
+        ctx.lineTo(end.x, end.y);
+        ctx.stroke();
+        ctx.closePath();
+    };
+    return {start, end, k, b, getX, getY, draw};
 };
 
 const getScreen = () => {
@@ -21,13 +43,43 @@ const getScreen = () => {
     };
 };
 
+const zip = (a, b) => a.map((ai, i) => [ai, b[i]]);
+const activationFunction = (x) => x >= 0 ? 1 : -1;
+
+const createPerceptron = () => {
+    const weights = [
+        Math.random() * 2 - 1,
+        Math.random() * 2 - 1,
+        Math.random() * 2 - 1,
+    ];
+
+    const guess = (inputs) => activationFunction(
+        zip(inputs, weights).reduce((sum, [x, w]) => sum + x * w, 0)
+    );
+
+    const getLine = ({canvas}) => {
+        const k = - weights[0] / weights[1];
+        const b = - weights[2] / weights[1];
+        return createLine(0, b, canvas.width, k * canvas.width + b);
+    };
+
+    const drawLine = (ctx) => {
+        const line = getLine(ctx);
+        line.draw(ctx, 1, '#f00');
+    }
+
+    return {guess, getLine, drawLine};
+};
+
 window.addEventListener('DOMContentLoaded', () => {
     const screen = getScreen();
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
 
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
     canvas.width = window.innerWidth;
-    canvas.height =window.innerHeight;
+    canvas.height = window.innerHeight;
 
     const line = createLine(
         0,
@@ -36,23 +88,19 @@ window.addEventListener('DOMContentLoaded', () => {
         Math.random() * canvas.height
     );
 
+    line.draw(ctx);
+
     screen.write(`width = ${canvas.width}`);
     screen.write(`height = ${canvas.height}`);
     screen.write(`k = ${line.k}`);
     screen.write(`b = ${line.b}`);
 
-    ctx.lineWidth = 1;
-    ctx.strokeStyle = '#000';
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.beginPath();
-    ctx.moveTo(line.start.x, line.start.y);
-    ctx.lineTo(line.end.x, line.end.y);
-    ctx.stroke();
-    ctx.closePath();
-
     const numberOfPoints = 100;
     const points = [];
+    const bias = 1;
+    const perceptron = createPerceptron();
+
+    perceptron.drawLine(ctx);
 
     for (let i = 0; i < numberOfPoints; i++) {
         const point = vector(
@@ -60,14 +108,18 @@ window.addEventListener('DOMContentLoaded', () => {
             Math.random() * canvas.height
         );
 
-        ctx.fillStyle = point.y <= line.getY(point.x) ? '#fff' : '#000';
-
-        ctx.beginPath();
-        ctx.arc(point.x, point.y, 10, 0, 2 * Math.PI);
-        ctx.stroke();
-        ctx.fill();
-        ctx.closePath();
-
         points.push(point);
+        point.drawPoint({
+            ctx,
+            radius: 10,
+            fillStyle: point.y <= line.getY(point.x) ? '#fff' : '#000',
+        });
+
+        const guess = perceptron.guess([point.x, point.y, bias]);
+        point.drawPoint({
+            ctx,
+            radius: 4,
+            fillStyle: guess > 0 ? '#0f0' : '#f00',
+        });
     }
 });
