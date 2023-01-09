@@ -1,156 +1,113 @@
-const vector = (x, y) => (
-    Object.assign([x, y], {
-        x,
-        y,
-        drawPoint: ({ctx, radius, lineWidth = 1, strokeStyle = '#000', fillStyle = '#000'}) => {
-            ctx.lineWidth = lineWidth;
-            ctx.strokeStyle = strokeStyle;
-            ctx.fillStyle = fillStyle;
-            ctx.beginPath();
-            ctx.arc(x, y, radius, 0, 2 * Math.PI);
-            ctx.stroke();
-            ctx.fill();
-            ctx.closePath();
-        },
-    })
-);
-
-const createLine = (x1, y1, x2, y2) => {
-    const start = vector(x1, y1);
-    const end = vector(x2, y2);
-    const k = (y2 - y1) / (x2 - x1);
-    const b = y1 - k * x1;
-    const getY = (x) => k * x + b;
-    const getX = (y) => y / k - b;
-    const getTarget = (point) => point.y <= getY(point.x) ? 1 : -1;
-    const draw = (ctx, lineWidth = 1, strokeStyle = '#000') => {
-        ctx.lineWidth = lineWidth;
-        ctx.strokeStyle = strokeStyle;
-        ctx.beginPath();
-        ctx.moveTo(start.x, start.y);
-        ctx.lineTo(end.x, end.y);
-        ctx.stroke();
-        ctx.closePath();
-    };
-    return {start, end, k, b, getX, getY, draw, getTarget};
-};
-
-const getScreen = () => {
-    const pre = document.getElementById('console');
-    return {
-        clear: () => pre.innerText = '',
-        rewrite: (str) => pre.innerText = str,
-        write: (str, newLine = true) => pre.innerText += (newLine ? '\n' : '') + str,
-    };
-};
-
-const zip = (a, b) => a.map((ai, i) => [ai, b[i]]);
-const activationFunction = (x) => x >= 0 ? 1 : -1;
-
-const createPerceptron = (learningRate) => {
-    const weights = [
-        Math.random() * 2 - 1,
-        Math.random() * 2 - 1,
-        Math.random() * 2 - 1,
-    ];
-
-    const guess = (inputs) => activationFunction(
-        zip(inputs, weights).reduce((sum, [x, w]) => sum + x * w, 0)
-    );
-
-    const train = (inputs, target) => {
-        const g = guess(inputs);
-        const error = target - g; // 0 | 2 | -2
-        for (let i = 0; i < weights.length; i++) {
-            weights[i] += error * inputs[i] * learningRate; // Gradient Descent
-        }
-
-        return g;
-    }
-
-    const getLine = ({canvas}) => {
-        const k = - weights[0] / weights[1];
-        const b = - weights[2] / weights[1];
-        return createLine(0, b, canvas.width, k * canvas.width + b);
-    };
-
-    const drawLine = (ctx) => {
-        const line = getLine(ctx);
-        line.draw(ctx, 1, '#f00');
-    }
-
-    return {guess, getLine, drawLine, train};
-};
-
 window.addEventListener('DOMContentLoaded', () => {
-    const screen = getScreen();
+    const screen = DebugOutput();
+    const learningRate = document.getElementById('learning-rate');
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
-    const line = createLine(
-        0,
-        Math.random() * canvas.height,
-        canvas.width,
-        Math.random() * canvas.height
-    );
+    const line = Line(0, random(canvas.height), canvas.width, random(canvas.height));
+    const bias = 1;
+    const getLearningRate = () => parseFloat(learningRate.value);
 
-    line.draw(ctx);
-
-    screen.write(`width = ${canvas.width}`);
-    screen.write(`height = ${canvas.height}`);
-    screen.write(`k = ${line.k}`);
-    screen.write(`b = ${line.b}`);
+    screen.dump({
+        'Learning rate': getLearningRate(),
+        'Canvas Width': canvas.width,
+        'Canvas Height': canvas.height,
+        'Target m': line.m,
+        'Target b': line.b,
+        'Bias': bias,
+    });
 
     const numberOfPoints = 100;
-    const points = [];
-    const bias = 1;
-    const perceptron = createPerceptron(0.001);
+    const points = Array.from({length: numberOfPoints}).map(() => (
+        Vector(random(canvas.width), random(canvas.height))
+    ));
 
-    perceptron.drawLine(ctx);
+    const perceptron = Perceptron(learningRate);
 
-    for (let i = 0; i < numberOfPoints; i++) {
-        const point = vector(Math.random() * canvas.width, Math.random() * canvas.height);
-
-        points.push(point);
-        point.drawPoint({
-            ctx,
-            radius: 10,
-            fillStyle: line.getTarget(point) > 0 ? '#fff' : '#000',
-        });
-
-        const guess = perceptron.guess([point.x, point.y, bias]);
-        point.drawPoint({
-            ctx,
-            radius: 4,
-            fillStyle: guess > 0 ? '#0f0' : '#f00',
-        });
-    }
-
-    canvas.onclick = () => {
+    const redraw = () => {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         line.draw(ctx);
-        perceptron.drawLine(ctx);
+
+        let errorCount = 0;
 
         for (const point of points) {
-            const target = line.getTarget(point);
-
+            const target = line.getTarget(point)
             point.drawPoint({
                 ctx,
                 radius: 10,
-                fillStyle: target > 0 ? '#fff' : '#000'
+                fillStyle: target > 0 ? '#fff' : '#000',
             });
 
-            const guess = perceptron.train([point.x, point.y, bias], target);
+            const guess = perceptron.train([point.x, point.y, bias], target, getLearningRate());
+
             point.drawPoint({
                 ctx,
                 radius: 4,
                 fillStyle: guess > 0 ? '#0f0' : '#f00',
             });
+
+            if (guess !== target) {
+                errorCount++
+            }
+
+            const {weights: [w0, w1, w2]} = perceptron;
+            const {m, b} = perceptron.getLineParams();
+
+            screen.merge({
+                'Input #1 Weight': w0,
+                'Input #2 Weight': w1,
+                'Input #3 Weight': w2,
+                'Guess m': m,
+                'Guess b': b,
+            });
+        }
+
+        perceptron.drawLine(ctx);
+
+        return errorCount;
+    };
+
+    let run = true;
+    let end = false;
+    let iterations = 0;
+
+    const loop = () => {
+        if (end) {
+            return;
+        }
+
+        const errorCount = redraw();
+        screen.merge({
+            'Total iterations': ++iterations,
+            'Number of errors': errorCount
+        });
+
+        if (!errorCount) {
+            end = true;
+        }
+
+        if (run) {
+            requestAnimationFrame(loop);
         }
     };
+
+    (canvas.onclick = () => {
+        run = !run;
+        requestAnimationFrame(loop);
+    })();
+
+    learningRate.oninput = () => {
+        screen.merge({'Learning rate': getLearningRate()});
+    };
+
+    canvas.onmousemove = debounce(({clientX, clientY}) => {
+        const {left, top} = canvas.getBoundingClientRect();
+        screen.merge({
+          X: clientX - left,
+          Y: clientY - top,
+        });
+    }, 100);
 });
