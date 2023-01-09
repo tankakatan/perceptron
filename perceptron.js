@@ -7,7 +7,6 @@ const Perceptron = () => {
             weightedSum += inputs[i] * weights[i];
         }
 
-        console.log('guess', {inputs, weights, weightedSum});
         return activationFunction(weightedSum);
     };
 
@@ -18,8 +17,6 @@ const Perceptron = () => {
         for (let i = 0; i < weights.length; i++) {
             weights[i] += error * inputs[i] * learningRate; // Gradient Descent
         }
-
-        console.log('train', {assumption, target, error, newWeights: weights});
 
         return guess(inputs);
     }
