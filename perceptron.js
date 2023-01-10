@@ -1,4 +1,4 @@
-const activationFunction = x => x >= 0 ? 1 : -1;
+const activationFunction = x => Number(x >= 0);
 const Perceptron = () => {
     const weights = [random(-1, 1), random(-1, 1), random(-1, 1)];
     const guess = inputs => {
@@ -21,20 +21,10 @@ const Perceptron = () => {
         return guess(inputs);
     }
 
-    const getLineParams = () => ({
-        m: - weights[0] / weights[1],
-        b: - weights[2] / weights[1],
+    const line = () => Line({
+        m: -weights[0] / weights[1],
+        b: -weights[2] / weights[1],
     });
 
-    const getLine = ({canvas}) => {
-        const {m, b} = getLineParams()
-        return Line(0, b, canvas.width, m * canvas.width + b);
-    };
-
-    const drawLine = (ctx) => {
-        const line = getLine(ctx);
-        line.draw(ctx, 1, '#f00');
-    }
-
-    return {weights, guess, getLineParams, getLine, drawLine, train};
+    return {weights, guess, train, line};
 };

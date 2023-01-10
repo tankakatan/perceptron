@@ -7,7 +7,11 @@ window.addEventListener('DOMContentLoaded', () => {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
-    const line = Line(0, random(canvas.height), canvas.width, random(canvas.height));
+    const line = Line({
+        start: Vector(0, random(canvas.height)),
+        end: Vector(canvas.width, random(canvas.height)),
+    });
+
     const bias = 1;
     const getLearningRate = () => parseFloat(learningRate.value);
 
@@ -15,9 +19,8 @@ window.addEventListener('DOMContentLoaded', () => {
         'Learning rate': getLearningRate(),
         'Canvas Width': canvas.width,
         'Canvas Height': canvas.height,
-        'Target m': line.m,
-        'Target b': line.b,
         'Bias': bias,
+        'Target': line.toString(),
     });
 
     const numberOfPoints = 100;
@@ -25,47 +28,34 @@ window.addEventListener('DOMContentLoaded', () => {
         Vector(random(canvas.width), random(canvas.height))
     ));
 
-    const perceptron = Perceptron(learningRate);
+    const perceptron = Perceptron();
 
     const redraw = () => {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        line.draw(ctx);
+        line.draw({ctx});
 
         let errorCount = 0;
 
         for (const point of points) {
-            const target = line.getTarget(point)
-            point.drawPoint({
-                ctx,
-                radius: 10,
-                fillStyle: target > 0 ? '#fff' : '#000',
-            });
-
+            const target = line.classify(point)
             const guess = perceptron.train([point.x, point.y, bias], target, getLearningRate());
 
-            point.drawPoint({
-                ctx,
-                radius: 4,
-                fillStyle: guess > 0 ? '#0f0' : '#f00',
-            });
+            errorCount += Number(guess !== target);
 
-            if (guess !== target) {
-                errorCount++
-            }
+            point.put({ctx, radius: 10, fillStyle: target ? '#fff' : '#000'});
+            point.put({ctx, radius: 4, fillStyle: guess ? '#0f0' : '#f00'});
 
             const {weights: [w0, w1, w2]} = perceptron;
-            const {m, b} = perceptron.getLineParams();
 
             screen.merge({
-                'Input #1 Weight': w0,
-                'Input #2 Weight': w1,
-                'Input #3 Weight': w2,
-                'Guess m': m,
-                'Guess b': b,
+                'Guess': perceptron.line(ctx).toString(),
+                'Weight X': w0,
+                'Weight Y': w1,
+                'Weight B': w2,
             });
         }
 
-        perceptron.drawLine(ctx);
+        perceptron.line().draw({ctx, strokeStyle: '#f00'});
 
         return errorCount;
     };
@@ -74,7 +64,7 @@ window.addEventListener('DOMContentLoaded', () => {
     let end = false;
     let iterations = 0;
 
-    const loop = () => {
+    const loop = () => requestAnimationFrame(() => {
         if (end) {
             return;
         }
@@ -89,14 +79,16 @@ window.addEventListener('DOMContentLoaded', () => {
             end = true;
         }
 
-        if (run) {
-            requestAnimationFrame(loop);
+        if (!run) {
+            return;
         }
-    };
+
+        loop();
+    });
 
     (canvas.onclick = () => {
         run = !run;
-        requestAnimationFrame(loop);
+        loop();
     })();
 
     learningRate.oninput = () => {

@@ -8,7 +8,7 @@ const DebugOutput = (initialState = {}) => {
     const prettify = v => isFinite(v) && !Number.isInteger(v) ? v.toFixed(3) : v;
     const dump = o => (
         setState(o),
-        write(Object.keys(o).map(k => `${k} = ${prettify(o[k])}`).join('\n'))
+        write(Object.keys(o).map(k => `${k}: ${prettify(o[k])}`).join('\n'))
     );
 
     const merge = o => dump({...state, ...o});

@@ -1,7 +1,7 @@
 const Vector = (x, y) => Object.assign([x, y], {
     x,
     y,
-    drawPoint: ({
+    put: ({
         ctx,
         radius,
         lineWidth = 1,
@@ -19,23 +19,29 @@ const Vector = (x, y) => Object.assign([x, y], {
     },
 });
 
-const Line = (x1, y1, x2, y2) => {
-    const start = Vector(x1, y1);
-    const end = Vector(x2, y2);
-    const m = (y2 - y1) / (x2 - x1);
-    const b = y1 - m * x1;
-    const getY = (x) => m * x + b;
-    const getX = (y) => y / m - b;
-    const getTarget = (point) => point.y <= getY(point.x) ? 1 : -1;
-    const draw = (ctx, lineWidth = 1, strokeStyle = '#000') => {
+const Line = ({start, end, m, b}) => {
+    if (start && end) {
+        // Line from two points
+        m = (end.y - start.y) / (end.x - start.x);
+        b = start.y - m * start.x;
+    }
+
+    const f = x => m * x + b;
+    const f_inverse = y => y / m - b;
+    const classify = ({x, y}) => Number(f(x) >= y);
+    const toString = (decimals = 2) => (
+        `ƒ(x) = ${m.toFixed(decimals)} ${b < 0 ? '-' : '+'} ${Math.abs(b).toFixed(decimals)}`
+    );
+
+    const draw = ({ctx, lineWidth = 1, strokeStyle = '#000'}) => {
         ctx.lineWidth = lineWidth;
         ctx.strokeStyle = strokeStyle;
         ctx.beginPath();
-        ctx.moveTo(start.x, start.y);
-        ctx.lineTo(end.x, end.y);
+        ctx.moveTo(0, f(0));
+        ctx.lineTo(ctx.canvas.width, f(ctx.canvas.width));
         ctx.stroke();
         ctx.closePath();
     };
 
-    return {start, end, m, b, getX, getY, draw, getTarget};
+    return {start, end, m, b, f_inverse, f, draw, classify, toString};
 };
