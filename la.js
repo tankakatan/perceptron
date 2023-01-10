@@ -30,7 +30,8 @@ const Line = ({start, end, m, b}) => {
     const f_inverse = y => y / m - b;
     const classify = ({x, y}) => Number(f(x) >= y);
     const toString = (decimals = 2) => (
-        `ƒ(x) = ${m.toFixed(decimals)} ${b < 0 ? '-' : '+'} ${Math.abs(b).toFixed(decimals)}`
+        `ƒ(x) = ${m.toFixed(decimals)}x ${b < 0 ? '-' : '+'} `+
+        `${Math.abs(b).toFixed(decimals)}`
     );
 
     const draw = ({ctx, lineWidth = 1, strokeStyle = '#000'}) => {
@@ -43,5 +44,5 @@ const Line = ({start, end, m, b}) => {
         ctx.closePath();
     };
 
-    return {start, end, m, b, f_inverse, f, draw, classify, toString};
+    return {m, b, f_inverse, f, draw, classify, toString};
 };

@@ -1,6 +1,5 @@
 window.addEventListener('DOMContentLoaded', () => {
     const screen = DebugOutput();
-    const learningRate = document.getElementById('learning-rate');
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
 
@@ -13,10 +12,8 @@ window.addEventListener('DOMContentLoaded', () => {
     });
 
     const bias = 1;
-    const getLearningRate = () => parseFloat(learningRate.value);
 
     screen.dump({
-        'Learning rate': getLearningRate(),
         'Canvas Width': canvas.width,
         'Canvas Height': canvas.height,
         'Bias': bias,
@@ -28,56 +25,76 @@ window.addEventListener('DOMContentLoaded', () => {
         Vector(random(canvas.width), random(canvas.height))
     ));
 
+    let learningRate = 0.1;
+
     const perceptron = Perceptron();
+    screen.merge({'Guess': perceptron.line().toString()});
+
+    const learn = ({noTrain} = {}) => {
+        let errorCount = 0;
+
+        for (const point of points) {
+            const inputs = [point.x, point.y, bias];
+
+            point.target = line.classify(point)
+            point.guess = perceptron.guess(inputs);
+
+            if (!noTrain) {
+                perceptron.train({inputs, ...point, learningRate});
+            }
+
+            errorCount += Number(point.target !== point.guess);
+
+            const {weights: [w0, w1, w2]} = perceptron;
+
+            screen.merge({'Weight X': w0, 'Weight Y': w1, 'Weight B': w2});
+        }
+
+        return errorCount;
+    };
 
     const redraw = () => {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         line.draw({ctx});
-
-        let errorCount = 0;
-
-        for (const point of points) {
-            const target = line.classify(point)
-            const guess = perceptron.train([point.x, point.y, bias], target, getLearningRate());
-
-            errorCount += Number(guess !== target);
-
-            point.put({ctx, radius: 10, fillStyle: target ? '#fff' : '#000'});
-            point.put({ctx, radius: 4, fillStyle: guess ? '#0f0' : '#f00'});
-
-            const {weights: [w0, w1, w2]} = perceptron;
-
-            screen.merge({
-                'Guess': perceptron.line(ctx).toString(),
-                'Weight X': w0,
-                'Weight Y': w1,
-                'Weight B': w2,
-            });
-        }
-
         perceptron.line().draw({ctx, strokeStyle: '#f00'});
 
-        return errorCount;
+        for (const point of points) {
+            point.put({ctx, radius: 10, fillStyle: point.target ? '#fff' : '#000'});
+            point.put({ctx, radius: 4, fillStyle: point.guess ? '#0f0' : '#f00'});
+        }
     };
 
     let run = true;
     let end = false;
     let iterations = 0;
+    let lastErrorCounts = [];
 
-    const loop = () => requestAnimationFrame(() => {
+    const loop = e => requestAnimationFrame(() => {
         if (end) {
             return;
         }
 
-        const errorCount = redraw();
+        const errorCount = learn(e);
+        redraw();
+
         screen.merge({
+            'Guess': perceptron.line().toString(),
             'Total iterations': ++iterations,
-            'Number of errors': errorCount
+            'Number of errors': errorCount,
+            'Learning Rate': learningRate,
         });
 
         if (!errorCount) {
             end = true;
         }
+
+        lastErrorCounts.push(errorCount);
+
+        if (lastErrorCounts.length > 10) {
+            lastErrorCounts = lastErrorCounts.slice(-10);
+        }
+
+        learningRate = learningRate * .9;
 
         if (!run) {
             return;
@@ -86,14 +103,10 @@ window.addEventListener('DOMContentLoaded', () => {
         loop();
     });
 
-    (canvas.onclick = () => {
+    (canvas.onclick = e => {
         run = !run;
-        loop();
-    })();
-
-    learningRate.oninput = () => {
-        screen.merge({'Learning rate': getLearningRate()});
-    };
+        loop(e);
+    })({noTrain: true});
 
     canvas.onmousemove = debounce(({clientX, clientY}) => {
         const {left, top} = canvas.getBoundingClientRect();

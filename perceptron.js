@@ -7,18 +7,15 @@ const Perceptron = () => {
             weightedSum += inputs[i] * weights[i];
         }
 
-        return activationFunction(weightedSum);
+        return assumption = activationFunction(weightedSum);
     };
 
-    const train = (inputs, target, learningRate) => {
-        const assumption = guess(inputs);
-        const error = target - assumption; // 0 | 2 | -2
+    const train = ({inputs, guess, target, learningRate}) => {
+        const error = target - guess; // 0 | 1 | -1
 
         for (let i = 0; i < weights.length; i++) {
             weights[i] += error * inputs[i] * learningRate; // Gradient Descent
         }
-
-        return guess(inputs);
     }
 
     const line = () => Line({
