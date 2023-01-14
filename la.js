@@ -1,4 +1,4 @@
-const Vector = (x, y) => Object.assign([x, y], {
+export const Vector = (x, y) => Object.assign([x, y], {
     x,
     y,
     put: ({
@@ -19,7 +19,7 @@ const Vector = (x, y) => Object.assign([x, y], {
     },
 });
 
-const Line = ({start, end, m, b}) => {
+export const Line = ({start, end, m, b}) => {
     if (start && end) {
         // Line from two points
         m = (end.y - start.y) / (end.x - start.x);

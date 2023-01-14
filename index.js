@@ -1,3 +1,8 @@
+import {DebugOutput} from 'debug';
+import {Vector, Line} from 'la';
+import Perceptron from 'perceptron';
+import {random, debounce} from 'util';
+
 window.addEventListener('DOMContentLoaded', () => {
     const screen = DebugOutput();
     const canvas = document.getElementById('canvas');
@@ -27,7 +32,9 @@ window.addEventListener('DOMContentLoaded', () => {
 
     let learningRate = 0.1;
 
+    // const plotter = Plotter();
     const perceptron = Perceptron();
+
     screen.merge({'Guess': perceptron.line().toString()});
 
     const learn = ({noTrain} = {}) => {
@@ -46,6 +53,8 @@ window.addEventListener('DOMContentLoaded', () => {
             errorCount += Number(point.target !== point.guess);
 
             const {weights: [w0, w1, w2]} = perceptron;
+
+            // plotter.push(w0, w1, w2);
 
             screen.merge({'Weight X': w0, 'Weight Y': w1, 'Weight B': w2});
         }

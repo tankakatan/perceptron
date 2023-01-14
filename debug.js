@@ -1,4 +1,4 @@
-const DebugOutput = (initialState = {}) => {
+export const DebugOutput = (initialState = {}) => {
     let state = initialState;
 
     const pre = document.getElementById('debug-output');

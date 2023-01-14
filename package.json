@@ -1,0 +1,34 @@
+{
+  "name": "perceptron",
+  "description": "A basic neural network unit classifying dots on a plane. See more details [here](https://en.wikipedia.org/wiki/Perceptron).",
+  "version": "1.0.0",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "npx serve"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tankakatan/perceptron.git"
+  },
+  "keywords": [
+    "perceptron",
+    "machine",
+    "learning",
+    "ml",
+    "neural",
+    "network",
+    "supervised",
+    "learning",
+    "classification"
+  ],
+  "author": "neodequate",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/tankakatan/perceptron/issues"
+  },
+  "homepage": "https://github.com/tankakatan/perceptron#readme"
+}

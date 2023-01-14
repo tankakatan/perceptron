@@ -1,3 +1,6 @@
+import {random} from 'util';
+import {Line} from 'la';
+
 const activationFunction = x => Number(x >= 0);
 const Perceptron = () => {
     const weights = [random(-1, 1), random(-1, 1), random(-1, 1)];
@@ -7,7 +10,7 @@ const Perceptron = () => {
             weightedSum += inputs[i] * weights[i];
         }
 
-        return assumption = activationFunction(weightedSum);
+        return activationFunction(weightedSum);
     };
 
     const train = ({inputs, guess, target, learningRate}) => {
@@ -25,3 +28,5 @@ const Perceptron = () => {
 
     return {weights, guess, train, line};
 };
+
+export default Perceptron;
