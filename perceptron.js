@@ -1,5 +1,5 @@
-import {random} from 'util';
-import {Line} from 'la';
+import {random} from './util.js';
+import {Line} from './la.js';
 
 const activationFunction = x => Number(x >= 0);
 const Perceptron = () => {
