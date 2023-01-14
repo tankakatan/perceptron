@@ -1,7 +1,7 @@
-import {DebugOutput} from './debug.js';
-import {Vector, Line} from './la.js';
-import Perceptron from './perceptron.js';
-import {random, debounce} from './util.js';
+import {DebugOutput} from 'debug';
+import {Vector, Line} from 'la';
+import Perceptron from 'perceptron';
+import {random, debounce} from 'util';
 
 window.addEventListener('DOMContentLoaded', () => {
     const screen = DebugOutput();
