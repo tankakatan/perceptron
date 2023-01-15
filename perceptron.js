@@ -1,6 +1,3 @@
-import {random} from 'util';
-import {Line} from 'la';
-
 const activationFunction = x => Number(x >= 0);
 const Perceptron = () => {
     const weights = [random(-1, 1), random(-1, 1), random(-1, 1)];
@@ -21,12 +18,7 @@ const Perceptron = () => {
         }
     }
 
-    const line = () => Line({
-        m: -weights[0] / weights[1],
-        b: -weights[2] / weights[1],
-    });
+    const line = () => Line(-weights[0] / weights[1], -weights[2] / weights[1]);
 
     return {weights, guess, train, line};
 };
-
-export default Perceptron;

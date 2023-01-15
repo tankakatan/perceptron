@@ -1,8 +1,3 @@
-import {DebugOutput} from 'debug';
-import {Vector, Line} from 'la';
-import Perceptron from 'perceptron';
-import {random, debounce} from 'util';
-
 window.addEventListener('DOMContentLoaded', () => {
     const screen = DebugOutput();
     const canvas = document.getElementById('canvas');
@@ -11,31 +6,14 @@ window.addEventListener('DOMContentLoaded', () => {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
-    const line = Line({
-        start: Vector(0, random(canvas.height)),
-        end: Vector(canvas.width, random(canvas.height)),
-    });
-
+    const line = Line(random(-1, 1), random(-1, 1));
     const bias = 1;
-
-    screen.dump({
-        'Canvas Width': canvas.width,
-        'Canvas Height': canvas.height,
-        'Bias': bias,
-        'Target': line.toString(),
-    });
-
     const numberOfPoints = 100;
     const points = Array.from({length: numberOfPoints}).map(() => (
-        Vector(random(canvas.width), random(canvas.height))
+        Vector(random(-1, 1), random(-1, 1))
     ));
 
-    let learningRate = 0.1;
-
-    // const plotter = Plotter();
     const perceptron = Perceptron();
-
-    screen.merge({'Guess': perceptron.line().toString()});
 
     const learn = ({noTrain} = {}) => {
         let errorCount = 0;
@@ -54,8 +32,6 @@ window.addEventListener('DOMContentLoaded', () => {
 
             const {weights: [w0, w1, w2]} = perceptron;
 
-            // plotter.push(w0, w1, w2);
-
             screen.merge({'Weight X': w0, 'Weight Y': w1, 'Weight B': w2});
         }
 
@@ -65,18 +41,42 @@ window.addEventListener('DOMContentLoaded', () => {
     const redraw = () => {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         line.draw({ctx});
-        perceptron.line().draw({ctx, strokeStyle: '#f00'});
+        perceptron.line().draw({ctx, strokeStyle: '#00f'});
 
         for (const point of points) {
             point.put({ctx, radius: 10, fillStyle: point.target ? '#fff' : '#000'});
-            point.put({ctx, radius: 4, fillStyle: point.guess ? '#0f0' : '#f00'});
+            point.put({ctx, radius: 4,
+                fillStyle: point.guess === point.target ? '#0f0' : '#f00'
+            });
         }
     };
 
     let run = true;
     let end = false;
-    let iterations = 0;
-    let lastErrorCounts = [];
+    let iteration = 0;
+    let learningRate;
+    let schedule;
+
+    const scheduler = document.getElementById('schedules');
+
+    (scheduler.onchange = () => {
+        const {selectedOptions: [{value: kind}]} = scheduler;
+
+        schedule = schedules[kind]({decay: 0.01, initialRate: 0.1, dropRate: 20});
+        learningRate = schedule();
+        screen.merge(schedule.info);
+    })();
+
+    screen.dump({
+        'Canvas Width': canvas.width,
+        'Canvas Height': canvas.height,
+        'Data Set Size': numberOfPoints,
+        'Bias': bias,
+        ...schedule.info,
+        'Learning Rate': learningRate,
+        'Target': line.toString(),
+        'Guess': perceptron.line().toString(),
+    });
 
     const loop = e => requestAnimationFrame(() => {
         if (end) {
@@ -88,7 +88,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
         screen.merge({
             'Guess': perceptron.line().toString(),
-            'Total iterations': ++iterations,
+            'Total iterations': ++iteration,
             'Number of errors': errorCount,
             'Learning Rate': learningRate,
         });
@@ -97,13 +97,7 @@ window.addEventListener('DOMContentLoaded', () => {
             end = true;
         }
 
-        lastErrorCounts.push(errorCount);
-
-        if (lastErrorCounts.length > 10) {
-            lastErrorCounts = lastErrorCounts.slice(-10);
-        }
-
-        learningRate = learningRate * .9;
+        learningRate = schedule({rate: learningRate, iteration});
 
         if (!run) {
             return;
@@ -114,6 +108,10 @@ window.addEventListener('DOMContentLoaded', () => {
 
     (canvas.onclick = e => {
         run = !run;
+        if (run && !scheduler.disabled) {
+            scheduler.disabled = true;
+        }
+
         loop(e);
     })({noTrain: true});
 

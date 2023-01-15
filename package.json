@@ -3,9 +3,6 @@
   "description": "A basic neural network unit classifying dots on a plane. See more details [here](https://en.wikipedia.org/wiki/Perceptron).",
   "version": "1.0.0",
   "main": "index.js",
-  "directories": {
-    "lib": "lib"
-  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "npx serve"
@@ -16,14 +13,12 @@
   },
   "keywords": [
     "perceptron",
-    "machine",
-    "learning",
+    "machine learning",
     "ml",
-    "neural",
-    "network",
-    "supervised",
-    "learning",
-    "classification"
+    "neural network",
+    "supervised learning",
+    "binary classifier",
+    "linear classifier"
   ],
   "author": "neodequate",
   "license": "MIT",

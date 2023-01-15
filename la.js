@@ -1,8 +1,9 @@
-export const Vector = (x, y) => Object.assign([x, y], {
+const Vector = (x, y) => Object.assign([x, y], {
     x,
     y,
     put: ({
         ctx,
+        ctx: {canvas: {width, height}},
         radius,
         lineWidth = 1,
         strokeStyle = '#000',
@@ -12,20 +13,19 @@ export const Vector = (x, y) => Object.assign([x, y], {
         ctx.strokeStyle = strokeStyle;
         ctx.fillStyle = fillStyle;
         ctx.beginPath();
-        ctx.arc(x, y, radius, 0, 2 * Math.PI);
+        ctx.arc(
+            rescale(x, -1, 1, 0, width),
+            rescale(y, -1, 1, height, 0),
+            radius,
+            0, 2 * Math.PI
+        );
         ctx.stroke();
         ctx.fill();
         ctx.closePath();
     },
 });
 
-export const Line = ({start, end, m, b}) => {
-    if (start && end) {
-        // Line from two points
-        m = (end.y - start.y) / (end.x - start.x);
-        b = start.y - m * start.x;
-    }
-
+const Line = (m, b) => {
     const f = x => m * x + b;
     const f_inverse = y => y / m - b;
     const classify = ({x, y}) => Number(f(x) >= y);
@@ -34,12 +34,12 @@ export const Line = ({start, end, m, b}) => {
         `${Math.abs(b).toFixed(decimals)}`
     );
 
-    const draw = ({ctx, lineWidth = 1, strokeStyle = '#000'}) => {
+    const draw = ({ctx, ctx: {canvas: {width, height}}, lineWidth = 1, strokeStyle = '#000'}) => {
         ctx.lineWidth = lineWidth;
         ctx.strokeStyle = strokeStyle;
         ctx.beginPath();
-        ctx.moveTo(0, f(0));
-        ctx.lineTo(ctx.canvas.width, f(ctx.canvas.width));
+        ctx.moveTo(rescale(-1, -1, 1, 0, width), rescale(f(-1), -1, 1, height, 0));
+        ctx.lineTo(rescale( 1, -1, 1, 0, width), rescale(f( 1), -1, 1, height, 0));
         ctx.stroke();
         ctx.closePath();
     };

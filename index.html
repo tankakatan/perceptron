@@ -4,35 +4,24 @@
         <meta charset="utf-8"/>
         <title>Plane dots classifier</title>
         <link rel="stylesheet" href="index.css"/>
-        <script type="importmap">
-            {
-                "imports": {
-                    "util": "./util.js",
-                    "la": "./la.js",
-                    "debug": "./debug.js",
-                    "perceptron": "./perceptron.js"
-                }
-            }
-        </script>
-        <!-- <script src="lib/three.min.js"></script>
-        <script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
-        <script src="https://d3js.org/d3.v4.min.js"></script>
-        <script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script> -->
-        <!-- <script type="module" src="util.js"></script>
-        <script type="module" src="la.js"></script>
-        <script type="module" src="debug.js"></script>
-        <script type="module" src="perceptron.js"></script> -->
-        <!-- <script src="plotter.js"></script> -->
-        <script type="module" src="index.js"></script>
+        <script src="util.js"></script>
+        <script src="la.js"></script>
+        <script src="debug.js"></script>
+        <script src="perceptron.js"></script>
+        <script src="schedules.js"></script>
+        <script defer src="index.js"></script>
     </head>
     <body>
         <div id="box">
             <canvas id="canvas">Canvas is not supported by the browser</canvas>
             <div id="controls">
+                <label for="schedules">Learning Rate Schedule:</label>
+                <select name="schedules" id="schedules">
+                    <option value="time" selected>Time-based</option>
+                    <option value="step">Step-based</option>
+                    <option value="exp">Exponential</option>
+                </select>
                 <pre id="debug-output"></pre>
-            </div>
-            <div id="visualizer">
-                <canvas id="plot">Canvas is not supported by the browser</canvas>
             </div>
         </div>
     </body>
